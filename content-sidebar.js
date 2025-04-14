@@ -290,7 +290,7 @@
       renderWalletSelect(airdropWalletSelect);
       renderWalletSelect(walletSelect);
       alert("Wallet berhasil ditambahkan! Jangan lupa Join Telegram & YouTube : SHARE IT HUB");
-      window.open("https://youtu.be/bodHaUgROlo", "_blank");
+      window.open("https://youtu.be/blmjg3lGBvw", "_blank");
       document.getElementById("walletInput").value = "";
     } else {
       alert("Harap masukkan wallet address.");
