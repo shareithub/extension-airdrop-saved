@@ -23,7 +23,6 @@
       --gradient-light: linear-gradient(135deg, #f4f4f4, #ffffff);
     }
 
-    /* Ukuran default sidebar */
     html, body {
       margin: 0;
       padding: 0;
@@ -38,7 +37,7 @@
       background: var(--gradient-light);
       color: var(--text-light);
     }
-    /* Kontainer utama */
+
     .container {
       width: 300px;
       height: 100%;
@@ -58,7 +57,7 @@
       font-size: 1.7rem;
       font-weight: 700;
     }
-    /* Tombol Minimize */
+
     .minimize-btn {
       background-color: var(--primary-color);
       border: none;
@@ -72,7 +71,7 @@
     .minimize-btn:hover {
       background-color: var(--primary-hover);
     }
-    /* Saat minimisasi diaktifkan, lebar sidebar diperkecil */
+
     body.minimized {
       width: 50px;
       overflow: hidden;
@@ -86,7 +85,7 @@
     body.minimized button:not(.minimize-btn) {
       display: none;
     }
-    /* Contoh styling untuk konten lain */
+
     .content {
       margin-top: 20px;
     }
@@ -137,22 +136,22 @@
 </head>
 <body>
   <div class="container">
-    <!-- Tombol Minimize/Expand -->
+
     <button class="minimize-btn" id="minimizeBtn">SHARE IT HUB</button>
     <h2>AIRDROP SAVED</h2>
     <div class="content">
-      <!-- Contoh Form untuk menambahkan wallet -->
+
       <div class="input-group">
         <label for="walletInput">Wallet Address</label>
         <input type="text" id="walletInput" placeholder="Masukkan wallet address">
       </div>
       <button id="addWallet">Add Wallet</button>
-      <!-- Tambahan konten lain dapat diintegrasikan di sini, misalnya daftar airdrop, validasi, ekspor, dll. -->
+
     </div>
   </div>
   
   <script>
-    // Fungsionalitas toggle untuk minimisasi sidebar
+
     const minimizeBtn = document.getElementById("minimizeBtn");
     const bodyEl = document.body;
     
@@ -166,18 +165,13 @@
       }
     });
 
-    // --- Contoh Script Tambahan ---
-    // Jika kamu ingin menambahkan logika untuk menangani data airdrop dan wallet,
-    // kamu dapat menambahkan fungsi atau mengimpor file eksternal (misalnya sidebar.js)
-    // Berikut contoh penanganan penambahan wallet secara sederhana:
-
     const addWalletBtn = document.getElementById("addWallet");
     const walletInput = document.getElementById("walletInput");
 
     addWalletBtn.addEventListener("click", () => {
       const wallet = walletInput.value.trim();
       if (wallet) {
-        // Simpan data wallet ke localStorage (atau lakukan logika lainnya)
+
         let wallets = JSON.parse(localStorage.getItem("walletAddresses")) || [];
         wallets.push(wallet);
         localStorage.setItem("walletAddresses", JSON.stringify(wallets));
