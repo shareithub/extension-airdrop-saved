@@ -1,17 +1,15 @@
 (function() {
-  // Pastikan sidebar tidak disisipkan lebih dari sekali
   if (document.getElementById('extension-sidebar')) return;
 
   let airdrops = [];
   let walletAddresses = [];
-  let sidebarState = "minimized"; // default state diubah menjadi minimized
+  let sidebarState = "minimized"; 
 
-  // Load data dari chrome.storage.local
   function loadData(callback) {
     chrome.storage.local.get(["airdrops", "walletAddresses", "sidebarState"], (result) => {
       airdrops = result.airdrops || [];
       walletAddresses = result.walletAddresses || [];
-      sidebarState = result.sidebarState || "minimized"; // fallback ke minimized
+      sidebarState = result.sidebarState || "minimized"; 
       renderWalletSelect(document.getElementById("airdropWalletSelect"));
       renderWalletSelect(document.getElementById("walletSelect"));
       renderWalletList();
@@ -19,7 +17,6 @@
     });
   }
 
-  // Simpan state dan data ke chrome.storage.local
   function saveState() {
     chrome.storage.local.set({ sidebarState });
   }
@@ -27,7 +24,6 @@
     chrome.storage.local.set({ airdrops, walletAddresses });
   }
 
-  // Render dropdown wallet
   function renderWalletSelect(selectElement) {
     if (!selectElement) return;
     selectElement.innerHTML = `<option value="">-- Pilih Wallet Address --</option>`;
@@ -39,7 +35,6 @@
     });
   }
 
-  // Render daftar wallet
   function renderWalletList() {
     const walletList = document.getElementById('walletList');
     if (!walletList) return;
@@ -51,7 +46,6 @@
     });
   }
 
-  // Buka halaman list airdrop di tab baru
   function viewAirdropList() {
     let htmlContent = `
       <!DOCTYPE html>
@@ -99,7 +93,6 @@
     newTab.document.close();
   }
 
-  // Fungsi untuk menghasilkan file Excel dari data airdrop
   function generateExcel() {
     const wb = XLSX.utils.book_new();
     const airdropHeaders = ["𝗟𝗜𝗡𝗞", "𝗧𝗔𝗚 ", "𝗪𝗔𝗟𝗟𝗘𝗧 𝗔𝗗𝗗𝗥𝗘𝗦𝗦", "𝗖𝗥𝗘𝗔𝗧𝗘 𝗔𝗗𝗗"];
@@ -125,7 +118,6 @@
     return new Blob([wbout], { type: "application/octet-stream" });
   }
 
-  // Terapkan state sidebar full atau minimized tanpa memodifikasi layout website
   function applySidebarState() {
     const minimizeBtn = document.getElementById("minimizeBtn");
     const sidebarContent = sidebar.querySelector(".sidebar-content");
@@ -135,19 +127,16 @@
     if (sidebarState === "full") {
       sidebar.classList.remove("minimized");
       sidebar.classList.add("full");
-  
-      // Ukuran normal sidebar
+
       sidebar.style.width = "320px";
       sidebar.style.height = "100%";
       sidebar.style.top = "0";
       sidebar.style.right = "0";
       sidebar.style.borderRadius = "0";
       sidebar.style.background = "linear-gradient(135deg, #243B55, #141E30)";
-  
-      // Tampilkan konten utama
+
       sidebarContent.style.display = "block";
-  
-      // Tampilkan tombol MINIMIZE (dengan teks atau icon)
+
       minimizeBtn.innerHTML = `<span style="font-weight: bold; color: white;">SHARE IT HUB</span>`;
       minimizeBtn.style.display = "block";
       minimizeBtn.style.background = "#00b894";
@@ -159,8 +148,7 @@
     } else {
       sidebar.classList.remove("full");
       sidebar.classList.add("minimized");
-  
-      // Ukuran minimized
+
       sidebar.style.width             = "90px";
       sidebar.style.height            = "90px";
       sidebar.style.top               = "90px";
@@ -169,11 +157,9 @@
       sidebar.style.backgroundColor   = "transparent";
       sidebar.style.border            = "none";
       sidebar.style.borderRadius      = "50%";
-  
-      // Sembunyikan konten utama
+
       sidebarContent.style.display = "none";
-  
-      // Ganti tombol jadi ikon besar
+
       const iconUrl = chrome.runtime.getURL("icons2.png");
       minimizeBtn.innerHTML = `
         <img src="${iconUrl}" alt="Expand"
@@ -188,8 +174,7 @@
       minimizeBtn.style.cursor = "pointer";
     }
   }  
-  
-  // Buat elemen sidebar dengan struktur HTML
+
   const sidebar = document.createElement('div');
   sidebar.id = 'extension-sidebar';
   sidebar.classList.add("full");
@@ -257,7 +242,6 @@
   document.body.appendChild(sidebar);
   applySidebarState();
 
-  // Event toggle minimize/expand sidebar
   const minimizeBtn = document.getElementById("minimizeBtn");
   minimizeBtn.addEventListener("click", () => {
     sidebarState = sidebar.classList.contains("minimized") ? "full" : "minimized";
@@ -265,20 +249,17 @@
     saveState();
   });
 
-  // Inisialisasi dropdown wallet
   const airdropWalletSelect = document.getElementById("airdropWalletSelect");
   const walletSelect = document.getElementById("walletSelect");
   renderWalletSelect(airdropWalletSelect);
   renderWalletSelect(walletSelect);
 
-  // Tampilkan input custom tag jika "OTHER" dipilih
   const airdropTagSelect = document.getElementById("airdropTagSelect");
   const customTagGroup = document.getElementById("customTagGroup");
   airdropTagSelect.addEventListener("change", () => {
     customTagGroup.style.display = airdropTagSelect.value === "OTHER" ? "flex" : "none";
   });
 
-  // Event: Tambah Airdrop
   document.getElementById("addAirdrop").addEventListener("click", () => {
     const wallet = airdropWalletSelect.value;
     let tag = airdropTagSelect.value;
@@ -298,10 +279,8 @@
     document.getElementById("airdropLink").value = "";
   });
 
-  // Event: Lihat List Airdrop
   document.getElementById("viewAirdropList").addEventListener("click", viewAirdropList);
 
-  // Event: Tambah Wallet
   document.getElementById("addWallet").addEventListener("click", () => {
     const wallet = document.getElementById("walletInput").value.trim();
     if (wallet) {
@@ -318,7 +297,6 @@
     }
   });
 
-  // Event: Cek Wallet Balance
   document.getElementById("checkWalletBalance").addEventListener("click", () => {
     const wallet = walletSelect.value;
     if (!wallet) {
@@ -333,7 +311,6 @@
     `;
   });
 
-  // Event: Export ke Excel
   document.getElementById("exportExcel").addEventListener("click", () => {
     const blob = generateExcel();
     const url = URL.createObjectURL(blob);
