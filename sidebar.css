@@ -1,0 +1,170 @@
+/* ==============================
+   EXTENSION SIDEBAR STYLES ONLY
+   ============================== */
+
+   #extension-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100%;
+    background: linear-gradient(135deg, #243B55, #141E30) !important;
+    color: #ffffff;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.6);
+    z-index: 9999 !important;
+    overflow-y: auto;
+    font-family: 'Poppins', sans-serif;
+    border: none;
+    transition: width 0.3s ease, height 0.3s ease, top 0.3s ease;
+  }
+  
+  /* Minimized Mode */
+  #extension-sidebar.minimized {
+    width: 90px;
+    height: 90px;
+    overflow: hidden;
+    border-radius: 50%;
+    background-image: none !important;
+    background-color: transparent !important;
+  }
+  
+  /* Wrapper Container */
+  #extension-sidebar .sidebar-container {
+    padding: 20px;
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+  }
+  
+  /* Header Title */
+  #extension-sidebar .sidebar-content h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  /* Section Area */
+  #extension-sidebar .section {
+    margin-bottom: 15px;
+  }
+  
+  /* Form Group Layout */
+  #extension-sidebar .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  #extension-sidebar .input-group label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #extension-sidebar .input-group input,
+  #extension-sidebar .input-group select {
+    padding: 10px;
+    border: none;
+    background: #ffffff15;
+    font-size: 0.95rem;
+    color: #ffffff;
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  #extension-sidebar .input-group input:focus,
+  #extension-sidebar .input-group select:focus {
+    background: #ffffff25;
+    box-shadow: 0 0 8px rgba(0, 184, 148, 0.8);
+    outline: none;
+  }
+  
+  /* General Buttons (NOT Minimize) */
+  #extension-sidebar .section button {
+    width: 100%;
+    padding: 12px;
+    background-color: #00b894;
+    color: #ffffff;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: background-color 0.3s, transform 0.2s;
+    cursor: pointer;
+  }
+  #extension-sidebar .section button:hover {
+    background-color: #019875;
+    transform: translateY(-2px);
+  }
+  
+  /* Wallet List */
+  #extension-sidebar #walletList {
+    list-style: none;
+    padding-left: 0;
+    max-height: 120px;
+    overflow-y: auto;
+    background: #ffffff10;
+    border: 1px solid #ffffff20;
+    margin-top: 5px;
+  }
+  #extension-sidebar #walletList li {
+    padding: 8px;
+    border-bottom: 1px solid #ffffff20;
+    font-size: 0.9rem;
+  }
+  #extension-sidebar #walletList li:last-child {
+    border-bottom: none;
+  }
+  
+  /* Balance Result Display */
+  #extension-sidebar #balanceResult {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  /* ========================
+     Minimize / Expand Button
+     ======================== */
+  #extension-sidebar .minimize-btn {
+    all: unset;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10001;
+    padding: 6px 10px;
+    font-size: 12px;
+    background-color: #00b894;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #extension-sidebar .minimize-btn:hover {
+    background-color: #019875;
+  }
+  
+  /* Expand Icon (for minimized) */
+  #extension-sidebar.minimized .minimize-btn {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+  }
+  #extension-sidebar.minimized .minimize-btn img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+  }
+  

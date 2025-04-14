@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Airdrop Manager Sidebar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #141414;
+      --bg-light: #f4f4f4;
+      --text-dark: #e0e0e0;
+      --text-light: #222222;
+      --primary-color: #3498db;
+      --primary-hover: #2980b9;
+      --input-border: #555;
+      --input-border-focus: #3498db;
+      --container-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      --box-bg-dark: #1e1e1e;
+      --box-bg-light: #ffffff;
+      --gradient-dark: linear-gradient(135deg, #141414, #1e1e1e);
+      --gradient-light: linear-gradient(135deg, #f4f4f4, #ffffff);
+    }
+
+    /* Ukuran default sidebar */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 300px;
+      height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      background: var(--gradient-dark);
+      color: var(--text-dark);
+      transition: background 0.3s, color 0.3s, width 0.3s;
+    }
+    body.light-mode {
+      background: var(--gradient-light);
+      color: var(--text-light);
+    }
+    /* Kontainer utama */
+    .container {
+      width: 300px;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      background-color: var(--box-bg-dark);
+      border-radius: 0 12px 12px 0;
+      box-shadow: var(--container-shadow);
+      transition: background-color 0.3s;
+    }
+    body.light-mode .container {
+      background-color: var(--box-bg-light);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.7rem;
+      font-weight: 700;
+    }
+    /* Tombol Minimize */
+    .minimize-btn {
+      background-color: var(--primary-color);
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .minimize-btn:hover {
+      background-color: var(--primary-hover);
+    }
+    /* Saat minimisasi diaktifkan, lebar sidebar diperkecil */
+    body.minimized {
+      width: 50px;
+      overflow: hidden;
+    }
+    body.minimized .container {
+      width: 50px;
+    }
+    body.minimized h2,
+    body.minimized .content,
+    body.minimized .input-group,
+    body.minimized button:not(.minimize-btn) {
+      display: none;
+    }
+    /* Contoh styling untuk konten lain */
+    .content {
+      margin-top: 20px;
+    }
+    .input-group {
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .input-group label {
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .input-group input,
+    .input-group select {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--input-border);
+      font-size: 0.95rem;
+      background-color: transparent;
+      color: inherit;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus,
+    .input-group select:focus {
+      border-color: var(--input-border-focus);
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Tombol Minimize/Expand -->
+    <button class="minimize-btn" id="minimizeBtn">SHARE IT HUB</button>
+    <h2>AIRDROP SAVED</h2>
+    <div class="content">
+      <!-- Contoh Form untuk menambahkan wallet -->
+      <div class="input-group">
+        <label for="walletInput">Wallet Address</label>
+        <input type="text" id="walletInput" placeholder="Masukkan wallet address">
+      </div>
+      <button id="addWallet">Add Wallet</button>
+      <!-- Tambahan konten lain dapat diintegrasikan di sini, misalnya daftar airdrop, validasi, ekspor, dll. -->
+    </div>
+  </div>
+  
+  <script>
+    // Fungsionalitas toggle untuk minimisasi sidebar
+    const minimizeBtn = document.getElementById("minimizeBtn");
+    const bodyEl = document.body;
+    
+    minimizeBtn.addEventListener("click", () => {
+      if (bodyEl.classList.contains("minimized")) {
+        bodyEl.classList.remove("minimized");
+        minimizeBtn.textContent = "Minimize";
+      } else {
+        bodyEl.classList.add("minimized");
+        minimizeBtn.textContent = "Expand";
+      }
+    });
+
+    // --- Contoh Script Tambahan ---
+    // Jika kamu ingin menambahkan logika untuk menangani data airdrop dan wallet,
+    // kamu dapat menambahkan fungsi atau mengimpor file eksternal (misalnya sidebar.js)
+    // Berikut contoh penanganan penambahan wallet secara sederhana:
+
+    const addWalletBtn = document.getElementById("addWallet");
+    const walletInput = document.getElementById("walletInput");
+
+    addWalletBtn.addEventListener("click", () => {
+      const wallet = walletInput.value.trim();
+      if (wallet) {
+        // Simpan data wallet ke localStorage (atau lakukan logika lainnya)
+        let wallets = JSON.parse(localStorage.getItem("walletAddresses")) || [];
+        wallets.push(wallet);
+        localStorage.setItem("walletAddresses", JSON.stringify(wallets));
+        alert("Wallet berhasil ditambahkan!");
+        walletInput.value = "";
+      } else {
+        alert("Harap masukkan wallet address.");
+      }
+    });
+  </script>
+</body>
+</html>

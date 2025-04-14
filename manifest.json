@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "AIRDROP SAVED EXTENSION By SHARE IT HUB",
+  "description": "Manage airdrops, wallets, and export your data using an injected sidebar.",
+  "version": "1.0",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "action": {
+    "default_title": "Toggle Sidebar"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["xlsx.full.min.js", "content-sidebar.js"],
+      "css": ["sidebar.css"]
+    }
+  ],
+  "icons": {
+    "48": "icons.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons2.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
