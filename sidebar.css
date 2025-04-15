@@ -75,7 +75,7 @@
     border: none;
     background: #ffffff15;
     font-size: 0.95rem;
-    color: #ffffff;
+    color: #A9A9A9;
     transition: background-color 0.2s, box-shadow 0.2s;
   }
   #extension-sidebar .input-group input:focus,
