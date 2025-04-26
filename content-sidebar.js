@@ -5,6 +5,7 @@
   let walletAddresses = [];
   let sidebarState = "minimized"; 
   let sidebarPosition = { top: 90, left: null };   // default posisi saat minimized
+  let nameTags        = {};   // { address: tag }
   let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
   let privateKeys = {};   // { address: privateKey }
   let phrases     = {};   // { address: mnemonicPhrase }
@@ -20,7 +21,7 @@
 
   function loadData(callback) {
     chrome.storage.local.get(
-      ["airdrops","walletAddresses","sidebarState","sidebarPosition","privateKeys","phrases","passwordHash"],
+      ["airdrops","walletAddresses","sidebarState","sidebarPosition","privateKeys","phrases","passwordHash","nameTags"],
       async (result) => {    // ← jadikan callback async
         airdrops        = result.airdrops        || [];
         walletAddresses = result.walletAddresses || [];
@@ -28,6 +29,7 @@
         sidebarPosition = result.sidebarPosition || sidebarPosition;
         privateKeys     = result.privateKeys     || {};
         phrases         = result.phrases         || {};
+        nameTags        = result.nameTags        || {};
 
         // — PASSWORD DEFAULT —
         if (!result.passwordHash) {
@@ -49,7 +51,7 @@
       }
     );
   }
-
+  function saveTags()     { chrome.storage.local.set({ nameTags }); }
   function saveState()    { chrome.storage.local.set({ sidebarState }); }
   function saveData()     { chrome.storage.local.set({ airdrops, walletAddresses }); }
   function savePosition() { chrome.storage.local.set({ sidebarPosition }); }
@@ -62,125 +64,440 @@
     if (!selectElement) return;
     selectElement.innerHTML = `<option value="">-- Pilih Wallet Address --</option>`;
     walletAddresses.forEach(wallet => {
+      // jika ada tag, tampilkan "address ( TAG )"
+      const display = nameTags[wallet]
+        ? `${wallet} ( ${nameTags[wallet]} )`
+        : wallet;
       const option = document.createElement("option");
       option.value = wallet;
-      option.textContent = wallet;
+      option.textContent = display;
       selectElement.appendChild(option);
     });
   }
-
+  
   function renderWalletList() {
     const walletList = document.getElementById('walletList');
     if (!walletList) return;
     walletList.innerHTML = "";
     walletAddresses.forEach(wallet => {
+      const display = nameTags[wallet]
+        ? `${wallet} ( ${nameTags[wallet]} )`
+        : wallet;
+  
       const li = document.createElement("li");
-      li.textContent = wallet;
+      li.style.marginBottom = "6px";
+      li.style.display = "flex";
+      li.style.alignItems = "center";
+      li.style.justifyContent = "space-between";
+  
+      // Tombol buka Debank
+      const openBtn = document.createElement("button");
+      openBtn.textContent = display;
+      openBtn.style.flexGrow = "1";
+      openBtn.style.marginRight = "6px";
+      openBtn.style.padding = "5px 10px";
+      openBtn.style.border = "1px solid #ccc";
+      openBtn.style.borderRadius = "4px";
+      openBtn.style.background = "#3498db";
+      openBtn.style.color = "#fff";
+      openBtn.style.cursor = "pointer";
+      openBtn.addEventListener("click", () => {
+        window.open(`https://debank.com/profile/${wallet}`, "_blank");
+      });
+  
+      // Tombol Delete
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "🗑️";
+      deleteBtn.style.padding = "5px 10px";
+      deleteBtn.style.background = "#e74c3c";
+      deleteBtn.style.color = "#fff";
+      deleteBtn.style.border = "none";
+      deleteBtn.style.borderRadius = "4px";
+      deleteBtn.style.cursor = "pointer";
+      deleteBtn.addEventListener("click", () => {
+        if (confirm(`Yakin ingin menghapus wallet:\n${wallet}?`)) {
+          const index = walletAddresses.indexOf(wallet);
+          if (index > -1) {
+            walletAddresses.splice(index, 1);
+            delete nameTags[wallet];
+            delete privateKeys[wallet];
+            delete phrases[wallet];
+            saveData();
+            saveTags();
+            saveKeys();
+            savePhrases();
+            renderWalletList();
+            renderWalletSelect(document.getElementById("airdropWalletSelect"));
+            renderWalletSelect(document.getElementById("walletSelect"));
+            renderWalletSelect(document.getElementById("saveKeyWalletSelect"));
+            renderWalletSelect(document.getElementById("savePhraseWalletSelect"));
+          }
+        }
+      });
+  
+      li.appendChild(openBtn);
+      li.appendChild(deleteBtn);
       walletList.appendChild(li);
     });
   }
-
+  
   function viewAirdropList() {
+    const sortedAirdrops = [...airdrops].sort((a, b) => {
+      const tagCompare = a.tag.localeCompare(b.tag, undefined, { sensitivity: 'base' });
+      if (tagCompare !== 0) return tagCompare;
+      return a.timestamp - b.timestamp;
+    });
+  
     let htmlContent = `
       <!DOCTYPE html>
-      <html lang="en">
+      <html lang="id">
       <head>
         <meta charset="UTF-8">
         <title>LIST AIRDROP</title>
         <style>
           body { font-family: 'Poppins', sans-serif; padding: 20px; background-color: #f4f4f4; }
           h2 { text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { padding: 12px; border: 1px solid #ccc; text-align: center; }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: fixed;
+          }
+          th, td {
+            padding: 12px;
+            border: 2px solid #000;
+            text-align: center;
+            word-break: break-word;
+          }
           th { background-color: #2ecc71; color: #fff; }
-          tr:nth-child(even) { background-color: #e9e9e9; }
+          td a {
+            color: #0066cc;
+            text-decoration: underline;
+            display: inline-block;
+            width: 100%;
+          }
+          button.delete-btn {
+            padding: 4px 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          }
         </style>
       </head>
       <body>
         <h2>LIST AIRDROP</h2>
-    `;
-    if (airdrops.length === 0) {
-      htmlContent += `<p>Tidak ada data airdrop.</p>`;
-    } else {
-      htmlContent += `<table>
+        <table>
           <tr>
             <th>LINK</th>
             <th>TAG</th>
             <th>WALLET ADDRESS</th>
-            <th>CREATE ADD</th>
-          </tr>`;
-      airdrops.forEach(item => {
-        const dateStr = new Date(item.timestamp).toLocaleString();
-        htmlContent += `
-          <tr>
-            <td>${item.link}</td>
-            <td>${item.tag}</td>
-            <td>${item.wallet}</td>
-            <td>${dateStr}</td>
-          </tr>`;
-      });
-      htmlContent += `</table>`;
-    }
-    htmlContent += `</body></html>`;
+            <th>CREATE AT</th>
+            <th>DELETE</th>
+          </tr>
+    `;
+  
+    sortedAirdrops.forEach((item) => {
+      const dateStr = new Date(item.timestamp).toLocaleString();
+      const fontSize = item.link.length > 60 ? '0.8rem' : '1rem';
+  
+      htmlContent += `
+        <tr>
+          <td style="font-size: ${fontSize}; line-height: 1.2; max-width: 300px;">
+            <a href="${item.link}" target="_blank">${item.link}</a>
+          </td>
+          <td>${item.tag}</td>
+          <td>${nameTags[item.wallet] ? `${item.wallet} ( ${nameTags[item.wallet]} )` : item.wallet}</td>
+          <td>${dateStr}</td>
+          <td>
+            <button class="delete-btn" data-link="${item.link}">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+  
+    htmlContent += `
+        </table>
+  
+        <div style="margin-top:30px; font-size:0.95rem; text-align:center; color:#333;">
+          <p><strong>Channel Telegram :</strong>
+            <a href="https://t.me/SHAREITHUB_COM" target="_blank">https://t.me/SHAREITHUB_COM</a>
+          </p>
+          <p><strong>Channel YouTube :</strong>
+            <a href="https://www.youtube.com/@SHAREITHUB_COM?sub_confirmation=1" target="_blank">https://www.youtube.com/@SHAREITHUB_COM?sub_confirmation=1</a>
+          </p>
+          <p style="margin-top: 15px;">
+            Jangan lupa <strong>Subscribe</strong>, <strong>Like</strong> &amp; <strong>Share</strong>.<br>
+            Terimakasih ☺️
+          </p>
+          <iframe
+            src="https://www.youtube.com/embed/os4BH0Ad4UI?autoplay=1&mute=1&controls=0&playsinline=1&enablejsapi=1"
+            allow="autoplay"
+            style="width: 560px; height: 315px; border: 0; display: block; margin: 20px auto;">
+          </iframe>
+        </div>
+      </body>
+      </html>
+    `;
+  
     const newTab = window.open();
     newTab.document.write(htmlContent);
     newTab.document.close();
+  
+    // Inject event listener after tab is ready
+    newTab.addEventListener("load", () => {
+      const buttons = newTab.document.querySelectorAll(".delete-btn");
+      buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const link = btn.dataset.link; // Get the link from data-link attribute
+          const confirmDelete = newTab.confirm("Yakin ingin menghapus airdrop ini?");
+          if (confirmDelete) {
+            // Send delete message with the link to the parent window
+            window.postMessage({ type: "deleteAirdrop", link }, "*");
+            newTab.close(); // Close the tab after the action
+          }
+        });
+      });
+    });
   }
+  
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "deleteAirdrop") {
+      const link = event.data.link;
+      if (link) {
+        // Find the index of the airdrop with the matching link
+        const index = airdrops.findIndex(item => item.link === link);
+        if (index !== -1) {
+          airdrops.splice(index, 1); // Remove the item that matches the link
+          saveData(); // Save the updated airdrop list
+          alert("Airdrop berhasil dihapus.");
+          renderWalletList(); // Re-render or refresh the wallet list after deletion
+        }
+      }
+    }
+  });  
+  
+  function viewWalletList() {
+    const newTab = window.open("", "_blank");
+  
+    // Buat HTML awal tanpa <script>
+    const html = `
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <title>LIST WALLET ADDRESS</title>
+        <style>
+          body { font-family: 'Poppins', sans-serif; padding: 20px; background-color: #f8f9fa; color: #333; }
+          h2 { text-align: center; }
+          ul { list-style: none; padding: 0; }
+          li {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+          }
+          a:hover {
+            text-decoration: underline;
+          }
+          button.delete-btn {
+            padding: 4px 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          }
+          .wallet-info {
+            margin-left: 10px;
+            font-size: 0.9rem;
+            color: #555;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>List Wallet Address</h2>
+        <ul id="walletList"></ul>
+      </body>
+      </html>
+    `;
+  
+    newTab.document.write(html);
+    newTab.document.close();
+  
+    // Inject data dan event setelah tab siap
+    newTab.addEventListener("load", () => {
+      const listEl = newTab.document.getElementById("walletList");
+  
+      walletAddresses.forEach((addr) => {
+        const display = nameTags[addr] ? `${addr} ( ${nameTags[addr]} )` : addr;
+  
+        const li = newTab.document.createElement("li");
+  
+        const a = newTab.document.createElement("a");
+        a.href = `https://debank.com/profile/${addr}`;
+        a.target = "_blank";
+        a.textContent = display;
+  
+        // Menambahkan informasi tambahan (private key, mnemonic phrase)
+        const walletInfo = newTab.document.createElement("div");
+        walletInfo.className = "wallet-info";
+        
+        const privateKey = privateKeys[addr] ? `Private Key: ${privateKeys[addr]}` : "";
+        const phrase = phrases[addr] ? `Mnemonic Phrase: ${phrases[addr]}` : "";
+  
+        walletInfo.innerHTML = `${privateKey ? `<p>${privateKey}</p>` : ""} ${phrase ? `<p>${phrase}</p>` : ""}`;
+  
+        const delBtn = newTab.document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.textContent = "Delete";
+        delBtn.addEventListener("click", () => {
+          if (newTab.confirm("Yakin ingin menghapus wallet ini?\n" + addr)) {
+            // kirim ke tab utama
+            window.postMessage({ type: "deleteWallet", address: addr }, "*");
+            newTab.close();
+          }
+        });
+  
+        li.appendChild(a);
+        li.appendChild(walletInfo); // Menambahkan wallet info (private key dan phrase)
+        li.appendChild(delBtn);
+        listEl.appendChild(li);
+      });
+    });
+  }  
 
-  function generateExcel() {
-    const wb = XLSX.utils.book_new();
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "deleteWallet") {
+      const addr = event.data.address;
+      const index = walletAddresses.indexOf(addr);
+      if (index !== -1) {
+        walletAddresses.splice(index, 1);
+        delete nameTags[addr];
+        delete privateKeys[addr];
+        delete phrases[addr];
+        saveData();
+        saveTags();
+        saveKeys();
+        savePhrases();
+        renderWalletList();
+        ["airdropWalletSelect", "walletSelect", "saveKeyWalletSelect", "savePhraseWalletSelect"]
+          .forEach(id => renderWalletSelect(document.getElementById(id)));
+        alert("Wallet berhasil dihapus.");
+      }
+    }
+  });
+  
+  async function generateExcel() {
+    // 1. Buat Workbook & dua Worksheet
+    const wb  = new ExcelJS.Workbook();
+    const ws1 = wb.addWorksheet("Airdrop Data");
+    const ws2 = wb.addWorksheet("Wallet Data");
+  
+    // 2. Definisi warna tag (ARGB)
+    const tagColors = {
+      TESTNET:     "FFCCFFCC",
+      NODE:        "FFFFF2CC",
+      AIRDROP:     "FFDDEBF7",
+      RETROACTIVE: "FFF2DCDB",
+      OTHER:       "FFFFFFFF"
+    };
   
     // === Sheet 1: Airdrop Data ===
-    const airdropHeaders = ["𝗟𝗜𝗡𝗞", "𝗧𝗔𝗚 ", "𝗪𝗔𝗟𝗟𝗘𝗧 𝗔𝗗𝗗𝗥𝗘𝗦𝗦", "𝗖𝗥𝗘𝗔𝗧𝗘 𝗔𝗗𝗗"];
-    const airdropData = airdrops.map(item => {
-      const dateStr = new Date(item.timestamp).toLocaleString();
-      return [item.link, item.tag, item.wallet, dateStr];
+    const headers1 = ["𝗟𝗜𝗡𝗞", "𝗧𝗔𝗚", "𝗪𝗔𝗟𝗟𝗘𝗧 𝗔𝗗𝗗𝗥𝗘𝗦𝗦", "𝗖𝗥𝗘𝗔𝗧𝗘 𝗔𝗧"];
+    ws1.addRow(headers1);
+    ws1.getRow(1).eachCell(cell => {
+      cell.font  = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2ECC71" } };
+      cell.border = {
+        top:    { style: "medium", color: { argb: "FF000000" } },
+        left:   { style: "medium", color: { argb: "FF000000" } },
+        bottom: { style: "medium", color: { argb: "FF000000" } },
+        right:  { style: "medium", color: { argb: "FF000000" } }
+      };
     });
-    const sheetData = [airdropHeaders, ...airdropData];
-    const ws1 = XLSX.utils.aoa_to_sheet(sheetData);
   
-    // Autosize column widths (Sheet 1)
-    const colWidths1 = [];
-    for (let col = 0; col < sheetData[0].length; col++) {
-      let maxLength = sheetData[0][col].length;
-      sheetData.forEach(row => {
-        const cellValue = row[col] ? row[col].toString() : "";
-        if (cellValue.length > maxLength) maxLength = cellValue.length;
+    airdrops.forEach((item, idx) => {
+      const dateStr = new Date(item.timestamp).toLocaleString();
+      const row     = ws1.addRow([item.link, item.tag, item.wallet, dateStr]);
+      const fillClr = tagColors[item.tag] || tagColors.OTHER;
+  
+      row.eachCell(cell => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fillClr } };
+        cell.border = {
+          top:    { style: "medium", color: { argb: "FF000000" } },
+          left:   { style: "medium", color: { argb: "FF000000" } },
+          bottom: { style: "medium", color: { argb: "FF000000" } },
+          right:  { style: "medium", color: { argb: "FF000000" } }
+        };
       });
-      colWidths1.push({ wch: maxLength + 2 });
-    }
-    ws1["!cols"] = colWidths1;
-    XLSX.utils.book_append_sheet(wb, ws1, "Airdrop Data");
+      row.getCell(2).font = { bold: true };
+    });
   
-    // === Sheet 2: Wallet + Private Key + Phrase ===
-    const walletHeaders = ["𝗪𝗔𝗟𝗟𝗘𝗧 𝗔𝗗𝗗𝗥𝗘𝗦𝗦", "𝗣𝗥𝗜𝗩𝗔𝗧𝗘 𝗞𝗘𝗬", "𝗣𝗛𝗥𝗔𝗦𝗘"];
-    const walletData = walletAddresses.map(addr => [
-      addr,
-      privateKeys[addr] || "",
-      phrases[addr] || ""
-    ]);
-    const walletSheet = [walletHeaders, ...walletData];
-    const ws2 = XLSX.utils.aoa_to_sheet(walletSheet);
-  
-    // Autosize column widths (Sheet 2)
-    const colWidths2 = [];
-    for (let col = 0; col < walletSheet[0].length; col++) {
-      let maxLength = walletSheet[0][col].length;
-      walletSheet.forEach(row => {
-        const cellValue = row[col] ? row[col].toString() : "";
-        if (cellValue.length > maxLength) maxLength = cellValue.length;
+    ws1.columns.forEach(col => {
+      let max = 10;
+      col.eachCell({ includeEmpty: true }, cell => {
+        max = Math.max(max, (cell.value||"").toString().length);
       });
-      colWidths2.push({ wch: maxLength + 2 });
-    }
-    ws2["!cols"] = colWidths2;
-    XLSX.utils.book_append_sheet(wb, ws2, "Wallet Data");
+      col.width = max + 2;
+    });
   
-    // Output file
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    return new Blob([wbout], { type: "application/octet-stream" });
+    // === Sheet 2: Wallet Data ===
+    const headers2 = ["𝗪𝗔𝗟𝗟𝗘𝗧 𝗔𝗗𝗗𝗥𝗘𝗦𝗦", "𝗣𝗥𝗜𝗩𝗔𝗧𝗘 𝗞𝗘𝗬", "𝗣𝗛𝗥𝗔𝗦𝗘"];
+    ws2.addRow(headers2);
+    ws2.getRow(1).eachCell(cell => {
+      cell.font  = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2ECC71" } };
+      cell.border = {
+        top:    { style: "medium", color: { argb: "FF000000" } },
+        left:   { style: "medium", color: { argb: "FF000000" } },
+        bottom: { style: "medium", color: { argb: "FF000000" } },
+        right:  { style: "medium", color: { argb: "FF000000" } }
+      };
+    });
+  
+    walletAddresses.forEach((addr, idx) => {
+      const display = nameTags[addr]
+        ? `${addr} ( ${nameTags[addr]} )`
+        : addr;
+      const row = ws2.addRow([display, privateKeys[addr]||"", phrases[addr]||""]);
+  
+      // zebra‐stripe untuk Wallet Data
+      const stripe = (idx % 2 === 0) ? "FFF9F9F9" : "FFFFFFFF";
+      row.eachCell(cell => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: stripe } };
+        cell.border = {
+          top:    { style: "medium", color: { argb: "FF000000" } },
+          left:   { style: "medium", color: { argb: "FF000000" } },
+          bottom: { style: "medium", color: { argb: "FF000000" } },
+          right:  { style: "medium", color: { argb: "FF000000" } }
+        };
+      });
+    });
+  
+    ws2.columns.forEach(col => {
+      let max = 10;
+      col.eachCell({ includeEmpty: true }, cell => {
+        max = Math.max(max, (cell.value||"").toString().length);
+      });
+      col.width = max + 2;
+    });
+  
+    // 3. Generate buffer & return Blob
+    const buf = await wb.xlsx.writeBuffer();
+    return new Blob([buf], { type: "application/octet-stream" });
   }
   
-
   function applySidebarState() {
     const minimizeBtn = document.getElementById("minimizeBtn");
     const sidebarContent = sidebar.querySelector(".sidebar-content");
@@ -295,12 +612,16 @@
       </div>
       <!-- Section: Wallet -->
       <div class="section" id="section-wallet">
+        <button id="viewWalletList" style="margin-top:10px;">List Wallet Address</button>
         <div class="input-group">
           <label for="walletInput"><i class="fas fa-address-book"></i> Wallet Address</label>
           <input type="text" id="walletInput" placeholder="Masukkan wallet address">
         </div>
+        <div class="input-group">
+          <label for="walletTagInput"><i class="fas fa-tag"></i> Name Tag</label>
+          <input type="text" id="walletTagInput" placeholder="Masukkan name tag (bebas)">
+        </div>
         <button id="addWallet">Add Wallet</button>
-        <ul id="walletList"></ul>
       </div>
       <!-- Section: Check Balance -->
       <div class="section" id="section-balance">
@@ -412,28 +733,44 @@ document.getElementById("minimizeBtn").addEventListener("click", async () => {
 
   // view list
   document.getElementById("viewAirdropList").addEventListener("click", viewAirdropList);
+  document.getElementById("viewWalletList").addEventListener("click", viewWalletList);
 
   // add wallet
   document.getElementById("addWallet").addEventListener("click", () => {
     const wallet = document.getElementById("walletInput").value.trim();
+    const tag    = document.getElementById("walletTagInput").value.trim();    // ambil tag
+  
     if (!wallet) {
       alert("Harap masukkan wallet address.");
+      return;
+    }
+    if (!tag) {
+      alert("Harap masukkan name tag.");
       return;
     }
     if (walletAddresses.includes(wallet)) {
       alert("Wallet ini sudah ada di daftar.");
       document.getElementById("walletInput").value = "";
+      document.getElementById("walletTagInput").value = "";
       return;
     }
+  
+    // simpan
     walletAddresses.push(wallet);
+    nameTags[wallet] = tag;           // mapping address → tag
     saveData();
+    saveTags();                       // simpan nameTags ke storage
+  
+    // re-render UI
     renderWalletList();
     ["airdropWalletSelect","walletSelect","saveKeyWalletSelect","savePhraseWalletSelect"]
       .forEach(id => renderWalletSelect(document.getElementById(id)));
+  
     alert("Wallet berhasil ditambahkan!");
-    document.getElementById("walletInput").value = "";
+    document.getElementById("walletInput").value    = "";
+    document.getElementById("walletTagInput").value = "";
   });
-
+  
   // check balance
   document.getElementById("checkWalletBalance").addEventListener("click", () => {
     const wallet = walletSelect.value;
@@ -445,19 +782,24 @@ document.getElementById("minimizeBtn").addEventListener("click", async () => {
   });
 
   // export Excel
-  document.getElementById("exportExcel").addEventListener("click", () => {
-    const blob = generateExcel();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "data_airdrop_wallet.xlsx";
-    a.click();
-    URL.revokeObjectURL(url);
+  document.getElementById("exportExcel").addEventListener("click", async () => {
+    try {
+      const blob = await generateExcel();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = "data_airdrop_wallet.xlsx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Gagal generate Excel:", err);
+      alert("Error saat membuat file Excel. Cek console.");
+    }
   });
-
+  
   // export JSON
   document.getElementById("exportJSON").addEventListener("click", () => {
-    const backup = { airdrops, walletAddresses, privateKeys, phrases, sidebarState, sidebarPosition };
+    const backup = { airdrops, walletAddresses, nameTags, privateKeys, phrases, sidebarState, sidebarPosition };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -480,6 +822,7 @@ document.getElementById("minimizeBtn").addEventListener("click", async () => {
         chrome.storage.local.set({
           airdrops: data.airdrops || [],
           walletAddresses: data.walletAddresses || [],
+          nameTags: data.nameTags || {},
           privateKeys: data.privateKeys || {},
           phrases: data.phrases || {},
           sidebarState: data.sidebarState || sidebarState,
@@ -544,12 +887,6 @@ document.getElementById("minimizeBtn").addEventListener("click", async () => {
       </body></html>`;
     newTab.document.write(html);
     newTab.document.close();
-    walletAddresses.push(wallet.address);
-    privateKeys[wallet.address] = wallet.privateKey;
-    phrases[wallet.address]      = wallet.mnemonic.phrase;
-    saveData(); saveKeys(); savePhrases();
-    ["airdropWalletSelect","walletSelect","saveKeyWalletSelect","savePhraseWalletSelect"]
-      .forEach(id => renderWalletSelect(document.getElementById(id)));
   });
 
   // Save Private Key
